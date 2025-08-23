@@ -24,6 +24,7 @@ public class UniqueCharacters {
         String text = sc.nextLine();
         char[] unique = findUnique(text);
         System.out.println("Unique characters: " + Arrays.toString(unique));
+        sc.close();
 	}
 }
 
