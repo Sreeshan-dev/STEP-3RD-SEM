@@ -1,72 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STEP Codes</title>
+  <meta charset="utf-8" />
+  <title>STEP – Week Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #74ABE2, #5563DE);
-      color: #fff;
-      text-align: center;
-    }
-    header {
-      padding: 2rem;
-      background: rgba(0,0,0,0.3);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2.5rem;
-      letter-spacing: 2px;
-    }
-    main {
-      padding: 2rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-decoration: none;
-      color: #fff;
-      font-size: 1.2rem;
-      font-weight: bold;
-      transition: transform 0.2s, background 0.3s;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    }
-    .card:hover {
-      transform: translateY(-5px) scale(1.03);
-      background: rgba(255, 255, 255, 0.2);
-    }
-    footer {
-      margin-top: 2rem;
-      padding: 1rem;
-      font-size: 0.9rem;
-      background: rgba(0,0,0,0.2);
-    }
+    body {font-family: system-ui, sans-serif; max-width: 1100px; margin: 20px auto; padding: 0 16px;}
+    nav {margin-bottom: 20px;}
+    nav a {margin-right: 12px; color: blue; text-decoration: none; font-weight: 500;}
+    nav a:hover {text-decoration: underline;}
+    #content {border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 300px;}
+    iframe {width: 100%; height: 500px; border: none;}
   </style>
 </head>
 <body>
-  <header>
-    <h1>📘 STEP – My Weekly Codes</h1>
-    <p>Practice Problems | Lab | Homework</p>
-  </header>
+  <h1>STEP – Week Viewer</h1>
+  <nav id="menu"></nav>
+  <div id="content">Choose a week to view content.</div>
 
-  <main>
-    <a class="card" href="week.html?week=Week1">📂 Week 1</a>
-    <a class="card" href="week.html?week=Week2">📂 Week 2</a>
-    <a class="card" href="week.html?week=Week3">📂 Week 3</a>
-    <a class="card" href="week.html?week=Week4">📂 Week 4</a>
-  </main>
+  <script>
+    // 👉 Point to your week folders here
+    const weeks = {
+      "Week 1": "WEEK 1/index.html",
+      "Week 2": "WEEK 2/index.html"
+      // Add more weeks like this:
+      // "Week 3": "WEEK 3/index.html"
+    };
 
-  <footer>
-    &copy; 2025 Sreeshan | Built with ❤️ using GitHub Pages
-  </footer>
+    // Build the navigation menu
+    const menu = document.getElementById("menu");
+    for (let week in weeks) {
+      const link = document.createElement("a");
+      link.href = "#";
+      link.textContent = week;
+      link.onclick = () => {
+        document.getElementById("content").innerHTML =
+          `<iframe src="${weeks[week]}"></iframe>`;
+      };
+      menu.appendChild(link);
+    }
+  </script>
 </body>
 </html>
