@@ -1,148 +1,345 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STEP Codes Viewer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>STEP Codes Viewer — Enhanced</title>
+
+  <!-- Prism core and languages (kept) -->
   <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <style>
-    body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: #0d1117;
-      color: #e6edf3;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+    :root{
+      --bg:#0b1220; --panel:#0f1720; --muted:#9aa7b2; --accent:#58a6ff; --success:#2ea043; --glass: rgba(255,255,255,0.03);
+      --radius:12px; --glass-border: rgba(255,255,255,0.04);
+      --sidebar-w:320px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    header {
-      background: #161b22;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      border-bottom: 2px solid #30363d;
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background:linear-gradient(180deg,#05060a 0%, #0b1220 100%); color:#e6edf3}
+
+    header.appbar{
+      display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+      border-bottom:1px solid var(--glass-border); backdrop-filter: blur(6px);
     }
-    #container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
+    header .brand{display:flex; align-items:center; gap:12px}
+    header .brand h1{font-size:1.05rem; margin:0}
+    header .controls{margin-left:auto; display:flex; gap:8px; align-items:center}
+    header .controls button{background:transparent;border:1px solid var(--glass-border); color:var(--muted); padding:8px 10px; border-radius:10px; cursor:pointer}
+    header .controls button:hover{color:var(--accent); border-color:rgba(88,166,255,0.2)}
+
+    .layout{display:flex; height:calc(100vh - 64px)}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--glass-border); padding:16px; overflow:auto}
+    .sidebar .search{display:flex; gap:8px; margin-bottom:12px}
+    .sidebar input[type=text]{flex:1; padding:10px 12px; border-radius:10px; background:var(--glass); border:1px solid var(--glass-border); color:inherit}
+    .sidebar .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+    .chip{padding:6px 10px; border-radius:999px; font-size:0.85rem; border:1px solid var(--glass-border); color:var(--muted); cursor:pointer}
+    .chip.active{background:linear-gradient(90deg, rgba(88,166,255,0.12), rgba(46,160,211,0.06)); color:var(--accent); border-color:rgba(88,166,255,0.15)}
+
+    .file-list{display:flex; flex-direction:column; gap:6px}
+    .folder, .file{display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; cursor:pointer; transition:all .13s; border:1px solid transparent}
+    .folder:hover, .file:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .folder .meta, .file .meta{display:flex; flex-direction:column}
+    .folder .name, .file .name{font-weight:600}
+    .meta .sub{font-size:0.8rem; color:var(--muted)}
+
+    /* main viewer */
+    .viewer{flex:1; padding:18px; overflow:auto}
+    .toolbar{display:flex; gap:8px; align-items:center; margin-bottom:12px}
+    .toolbar .breadcrumbs{color:var(--muted); font-size:0.95rem}
+    .toolbar .actions{margin-left:auto; display:flex; gap:8px}
+    .btn{background:transparent; border:1px solid var(--glass-border); padding:8px 10px; border-radius:10px; color:var(--muted); cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#3cc0ff); color:#071226; border:0}
+    .file-info{display:flex; gap:12px; align-items:center; margin-bottom:12px}
+    .file-info .tag{padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); color:var(--muted); font-size:0.85rem}
+
+    pre[class*="language-"]{border-radius:12px; padding:14px; font-size:0.88rem; line-height:1.45; box-shadow:0 8px 30px rgba(3,7,18,0.6)}
+
+    /* responsive */
+    @media (max-width:900px){
+      :root{--sidebar-w:260px}
+      .sidebar{position:fixed; left:0; top:64px; bottom:0; z-index:50; transform:translateX(0)}
+      .layout{padding-left:0}
     }
-    #file-list {
-      width: 280px;
-      background: #161b22;
-      border-right: 2px solid #30363d;
-      padding: 1rem;
-      overflow-y: auto;
-    }
-    #file-list a {
-      display: block;
-      padding: 6px;
-      margin: 4px 0;
-      color: #58a6ff;
-      text-decoration: none;
-      border-radius: 6px;
-    }
-    #file-list a:hover {
-      background: #238636;
-      color: white;
-    }
-    #viewer {
-      flex: 1;
-      padding: 1rem;
-      overflow: auto;
-      background: #0d1117;
-    }
-    pre {
-      background: #161b22 !important;
-      padding: 1rem;
-      border-radius: 10px;
-      overflow-x: auto;
-    }
-    footer {
-      background: #161b22;
-      text-align: center;
-      padding: 0.7rem;
-      border-top: 2px solid #30363d;
-      font-size: 0.9rem;
-      color: #8b949e;
-    }
+
+    footer{padding:12px 18px; text-align:center; color:var(--muted); border-top:1px solid var(--glass-border)}
   </style>
 </head>
 <body>
-  <header>📚 STEP Codes Viewer</header>
-  <div id="container">
-    <div id="file-list"><p>Loading...</p></div>
-    <div id="viewer"><p>Select a file to view</p></div>
+  <header class="appbar">
+    <div class="brand">
+      <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#3cc0ff);display:flex;align-items:center;justify-content:center;font-weight:700">SC</div>
+      <div>
+        <h1 style="margin:0">STEP Codes Viewer</h1>
+        <div style="font-size:.85rem;color:var(--muted)">Browse code from your GitHub repo — frontend only (backend unchanged)</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="refreshBtn" title="Refresh file list"><i class="fa-solid fa-arrows-rotate"></i></button>
+      <button id="openRepo" title="Open repo on GitHub"><i class="fa-brands fa-github"></i></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="search">
+        <input id="searchInput" placeholder="Search files or folders..." />
+        <button id="clearSearch" title="Clear search" class="btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="filters">
+        <div class="chip active" data-filter="all">All WEEKs</div>
+        <div class="chip" data-filter="code">Code files</div>
+        <div class="chip" data-filter="docs">Docs</div>
+      </div>
+
+      <div id="fileList" class="file-list">
+        <p style="color:var(--muted)">Loading...</p>
+      </div>
+
+      <div style="margin-top:14px;color:var(--muted);font-size:0.85rem">Tip: Click a folder to open; click a file to preview. Use the search box to filter.</div>
+    </aside>
+
+    <main class="viewer">
+      <div class="toolbar">
+        <div class="breadcrumbs" id="breadcrumbs">/</div>
+        <div class="actions">
+          <button id="rawBtn" class="btn" title="Open raw file"><i class="fa-solid fa-file"></i> Raw</button>
+          <button id="copyBtn" class="btn" title="Copy code"><i class="fa-solid fa-copy"></i> Copy</button>
+          <button id="downloadBtn" class="btn" title="Download file"><i class="fa-solid fa-download"></i> Download</button>
+          <button id="toggleLines" class="btn" title="Toggle line numbers"><i class="fa-solid fa-list-ol"></i></button>
+        </div>
+      </div>
+
+      <div class="file-info" id="fileInfo" style="display:none">
+        <div class="tag" id="fileName">file.c</div>
+        <div class="tag" id="fileMeta">—</div>
+        <div class="tag" id="fileType">C</div>
+      </div>
+
+      <div id="codeContainer">
+        <p style="color:var(--muted)">Select a file to view</p>
+      </div>
+
+    </main>
   </div>
-  <footer>Developed by <b>Sreeshan Reddy</b></footer>
+
+  <footer>Developed by <b>Sreeshan Reddy</b> • Enhanced frontend</footer>
 
   <script>
+    // --- KEEP THESE VARIABLES (backend unchanged) ---
     const username = "Sreeshan-dev";
     const repo = "STEP-3RD-SEM";
     const apiBase = `https://api.github.com/repos/${username}/${repo}/contents`;
+    // ----------------------------------------------
 
-    async function fetchFiles(path = "") {
-      const res = await fetch(`${apiBase}/${path}`);
-      return await res.json();
+    // small utility
+    const $ = sel => document.querySelector(sel);
+
+    const fileListEl = document.getElementById('fileList');
+    const searchInput = document.getElementById('searchInput');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const codeContainer = document.getElementById('codeContainer');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileNameEl = document.getElementById('fileName');
+    const fileMetaEl = document.getElementById('fileMeta');
+    const fileTypeEl = document.getElementById('fileType');
+
+    let currentPath = '';
+    let lastFiles = [];
+    let lastText = '';
+    let showLineNumbers = true;
+
+    async function fetchFiles(path=''){
+      try{
+        const res = await fetch(`${apiBase}/${path}`);
+        return res.json();
+      }catch(e){
+        return {message: e.message}
+      }
     }
 
-    async function loadFileList(path = "") {
-      const list = document.getElementById("file-list");
-      list.innerHTML = "";
+    function isAllowedFolder(name){
+      return /^WEEK\d+$/i.test(name);
+    }
 
-      const files = await fetchFiles(path);
-      if (files.message) {
-        list.innerHTML = `<p>Error: ${files.message}</p>`;
+    function humanSize(bytes){
+      if (bytes == null) return '—';
+      const units=['B','KB','MB','GB']; let i=0; while(bytes>=1024 && i<units.length-1){bytes/=1024;i++}
+      return bytes.toFixed(bytes<10?2:1)+units[i];
+    }
+
+    function renderList(files){
+      lastFiles = files;
+      fileListEl.innerHTML='';
+      if(!files || files.length===0){
+        fileListEl.innerHTML = '<p style="color:var(--muted)">No files found</p>';
         return;
       }
 
-      files.sort((a, b) => a.type.localeCompare(b.type));
+      files.forEach(f=>{
+        const el = document.createElement('div');
+        el.className = f.type==='dir'? 'folder' : 'file';
+        el.innerHTML = `
+          <div style="width:36px;text-align:center">${f.type==='dir'?'<i class="fa-solid fa-folder"></i>':'<i class="fa-solid fa-file-code"></i>'}</div>
+          <div class="meta">
+            <div class="name">${f.name}</div>
+            <div class="sub">${f.type==='dir'? 'Folder' : (f.size? humanSize(f.size) : '')} ${f.type==='file' ? (' • ' + (f.name.split('.').pop() || 'file')) : ''}</div>
+          </div>`;
 
-      files.forEach(file => {
-        const link = document.createElement("a");
-        link.textContent = (file.type === "dir" ? "📁 " : "📄 ") + file.name;
-        link.href = "#";
-
-        link.onclick = (e) => {
-          e.preventDefault();
-          if (file.type === "dir") {
-            loadFileList(file.path);
-          } else {
-            loadFileContent(file.path);
+        el.onclick = ()=>{
+          if(f.type==='dir'){
+            loadFileList(f.path);
+          }else{
+            loadFileContent(f.path);
           }
         };
-        list.appendChild(link);
+        fileListEl.appendChild(el);
       });
     }
 
-    async function loadFileContent(path) {
-      const viewer = document.getElementById("viewer");
-      viewer.innerHTML = "<p>Loading file...</p>";
+    async function loadFileList(path=''){
+      currentPath = path || '';
+      breadcrumbs.textContent = path ? `/${path}` : '/';
+      fileInfo.style.display='none';
+      codeContainer.innerHTML = '<p style="color:var(--muted)">Loading files...</p>';
 
-      const res = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`);
-      const text = await res.text();
+      const files = await fetchFiles(path);
+      if(files.message){
+        fileListEl.innerHTML = `<p style="color:tomato">Error: ${files.message}</p>`;
+        codeContainer.innerHTML = '<p style="color:var(--muted)">Select a file to view</p>';
+        return;
+      }
 
-      let lang = "clike";
-      if (path.endsWith(".c")) lang = "c";
-      if (path.endsWith(".cpp") || path.endsWith(".cc")) lang = "cpp";
-      if (path.endsWith(".java")) lang = "java";
-
-      viewer.innerHTML = `<pre><code class="language-${lang}">${escapeHtml(text)}</code></pre>`;
-      Prism.highlightAll();
+      // filter root to show only WEEK folders
+      const filtered = (path === '' ) ? files.filter(x=> x.type==='dir' && isAllowedFolder(x.name)) : files;
+      // sort: dirs first
+      filtered.sort((a,b)=> (a.type===b.type)? a.name.localeCompare(b.name) : (a.type==='dir'? -1:1));
+      renderList(filtered);
     }
 
-    function escapeHtml(text) {
-      const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
-      return text.replace(/[&<>"']/g, m => map[m]);
+    async function loadFileContent(path){
+      fileInfo.style.display='none';
+      codeContainer.innerHTML = '<p style="color:var(--muted)">Loading file...</p>';
+
+      try{
+        const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${path}`;
+        const res = await fetch(rawUrl);
+        const text = await res.text();
+        lastText = text;
+
+        let lang = 'clike';
+        if(path.endsWith('.c')) lang='c';
+        if(path.endsWith('.cpp')||path.endsWith('.cc')) lang='cpp';
+        if(path.endsWith('.java')) lang='java';
+
+        fileNameEl.textContent = path.split('/').pop();
+        fileMetaEl.textContent = `${path} • ${new Date().toLocaleString()}`;
+        fileTypeEl.textContent = lang.toUpperCase();
+        fileInfo.style.display='flex';
+
+        const pre = document.createElement('pre');
+        pre.className = `language-${lang}` + (showLineNumbers? ' line-numbers' : '');
+        const code = document.createElement('code');
+        code.className = `language-${lang}`;
+        code.innerHTML = escapeHtml(text);
+        pre.appendChild(code);
+        codeContainer.innerHTML='';
+        codeContainer.appendChild(pre);
+        Prism.highlightElement(code);
+
+        // actions
+        $('#rawBtn').onclick = ()=> window.open(rawUrl, '_blank');
+        $('#downloadBtn').onclick = ()=> downloadText(fileNameEl.textContent, text);
+        $('#copyBtn').onclick = ()=> copyToClipboard(text);
+        $('#toggleLines').onclick = ()=> toggleLineNumbers();
+
+      }catch(e){
+        codeContainer.innerHTML = `<p style="color:tomato">Failed to load file: ${e.message}</p>`;
+      }
     }
 
+    function downloadText(name, text){
+      const a = document.createElement('a');
+      const blob = new Blob([text], {type:'text/plain'});
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function copyToClipboard(text){
+      try{ await navigator.clipboard.writeText(text); alert('Copied to clipboard'); }catch(e){ alert('Copy failed') }
+    }
+
+    function toggleLineNumbers(){
+      showLineNumbers = !showLineNumbers;
+      const pre = codeContainer.querySelector('pre');
+      if(pre){
+        pre.classList.toggle('line-numbers');
+      }
+    }
+
+    function escapeHtml(text){
+      return text.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch]);
+    }
+
+    // search/filter UI
+    searchInput.addEventListener('input', (e)=>{
+      const q = e.target.value.trim().toLowerCase();
+      if(!q){ renderList(lastFiles); return; }
+      const filtered = lastFiles.filter(f => f.name.toLowerCase().includes(q));
+      renderList(filtered);
+    });
+
+    document.getElementById('clearSearch').addEventListener('click', ()=>{ searchInput.value=''; searchInput.dispatchEvent(new Event('input')); });
+
+    document.getElementById('refreshBtn').addEventListener('click', ()=> loadFileList(currentPath));
+    document.getElementById('openRepo').addEventListener('click', ()=> window.open(`https://github.com/${username}/${repo}`, '_blank'));
+
+    // filter chips
+    document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      const f = c.dataset.filter;
+      if(f==='all') loadFileList('');
+      else if(f==='code'){
+        // show all files under current path but filter by common code extensions
+        (async ()=>{
+          const files = await fetchFiles(currentPath);
+          const ok = files.filter(x=> x.type==='file' && /\.(c|cpp|cc|h|hpp|java|py|js)$/.test(x.name));
+          renderList(ok);
+        })();
+      }else if(f==='docs'){
+        (async ()=>{
+          const files = await fetchFiles(currentPath);
+          const ok = files.filter(x=> x.type==='file' && /\.(md|txt|rst|pdf)$/.test(x.name));
+          renderList(ok);
+        })();
+      }
+    }));
+
+    // keyboard shortcuts: n = next file highlight, p previous, / focus search
+    window.addEventListener('keydown', (e)=>{
+      if(e.key==='/') { e.preventDefault(); searchInput.focus(); }
+      if(e.key==='r' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); loadFileList(currentPath); }
+    });
+
+    // initialize
     loadFileList();
   </script>
 </body>
 </html>
-
