@@ -1,92 +1,78 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>STEP – Weekly Codes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEP Codes</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:820px;margin:28px auto;padding:0 16px}
-    h1{margin-bottom:6px} .muted{color:#666;margin-top:0}
-    .card{border:1px solid #eee;border-radius:10px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    ul{padding-left:18px} li{margin:8px 0}
-    a.small{font-size:12px;color:#555;margin-left:8px}
+    /* General styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #74ABE2, #5563DE);
+      color: #fff;
+      text-align: center;
+    }
+
+    header {
+      padding: 2rem;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+    }
+
+    main {
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      transition: transform 0.2s, background 0.3s;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.03);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      font-size: 0.9rem;
+      background: rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
-  <h1>STEP — Weekly Codes</h1>
-  <p class="muted">Auto-lists Week folders (Practice Problems, Lab, HW) from this repository.</p>
+  <header>
+    <h1>📘 STEP – My Weekly Codes</h1>
+    <p>Practice Problems | Lab | Homework</p>
+  </header>
 
-  <div class="card">
-    <h3>Weeks</h3>
-    <ul id="weeks"><li class="muted">Loading…</li></ul>
-  </div>
+  <main>
+    <a class="card" href="week.html?week=Week1">📂 Week 1</a>
+    <a class="card" href="week.html?week=Week2">📂 Week 2</a>
+    <!-- Add more weeks as you go -->
+  </main>
 
-  <script>
-    // Try to auto-detect USER and REPO from URL (works for username.github.io/repo/)
-    function detectUserRepo() {
-      const host = location.hostname; // username.github.io
-      const hostParts = host.split('.');
-      let USER = hostParts[0] || '';
-      // pathname: /REPO/... -> second part is repo
-      const pathParts = location.pathname.split('/').filter(Boolean);
-      let REPO = pathParts[0] || '';
-      // fallback: ask GitHub API for current repo? We'll just warn if detection fails.
-      return {USER, REPO, BRANCH: 'main'};
-    }
-
-    const cfg = detectUserRepo();
-    // If detection failed (empty), fallback to placeholders (you can replace if needed)
-    if (!cfg.USER || !cfg.REPO) {
-      // Optional: you can edit these manually if detection doesn't work
-      // cfg.USER = "YOUR_USERNAME";
-      // cfg.REPO = "YOUR_REPO";
-    }
-
-    async function loadWeeks() {
-      const ul = document.getElementById('weeks');
-      try {
-        const res = await fetch(`https://api.github.com/repos/${cfg.USER}/${cfg.REPO}/contents?ref=${cfg.BRANCH}`);
-        const items = await res.json();
-        if (!Array.isArray(items)) throw new Error('Bad response from GitHub API');
-
-        // directories that look like week folders
-        const weekDirs = items.filter(x => x.type === 'dir' && /^week[\s\-_]*\d+/i.test(x.name))
-          .sort((a,b)=> {
-            const na = parseInt((a.name.match(/\d+/)||[0])[0],10);
-            const nb = parseInt((b.name.match(/\d+/)||[0])[0],10);
-            return na - nb;
-          });
-
-        if (weekDirs.length === 0) {
-          ul.innerHTML = '<li class="muted">No Week folders found yet.</li>';
-          return;
-        }
-
-        ul.innerHTML = '';
-        weekDirs.forEach(d => {
-          const li = document.createElement('li');
-          const a = document.createElement('a');
-          a.href = `week.html?dir=${encodeURIComponent(d.name)}`;
-          a.textContent = d.name;
-          li.appendChild(a);
-
-          const gh = document.createElement('a');
-          gh.href = `https://github.com/${cfg.USER}/${cfg.REPO}/tree/${cfg.BRANCH}/${encodeURIComponent(d.name)}`;
-          gh.textContent = ' view on GitHub';
-          gh.className = 'small';
-          gh.target = '_blank';
-          li.appendChild(gh);
-
-          ul.appendChild(li);
-        });
-
-      } catch (err) {
-        ul.innerHTML = `<li class="muted">Error loading weeks. Make sure Pages is enabled and repo is public.</li>`;
-        console.error(err);
-      }
-    }
-
-    loadWeeks();
-  </script>
+  <footer>
+    &copy; 2025 Sreeshan | Built with ❤️ using GitHub Pages
+  </footer>
 </body>
 </html>
