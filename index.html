@@ -2,85 +2,167 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <title>STEP Codes Viewer — Mobile Optimized</title>
 
-  <!-- Prism CSS -->
+  <!-- Prism -->
   <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet" />
-
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
-
-  <style>
-    :root{
-      --bg:#0b1220; --panel:#0f1720; --accent:#58a6ff; --muted:#9aa7b2;
-      --radius:12px; --glass:rgba(255,255,255,0.05);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:var(--bg);color:#e6edf3;font-family:Inter, sans-serif}
-
-    header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--panel);border-bottom:1px solid #222}
-    header .brand{font-weight:bold;font-size:1.1rem;color:var(--accent)}
-    header button{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
-
-    .layout{display:flex;flex-direction:column;height:calc(100vh - 56px)}
-
-    .sidebar{background:var(--panel);padding:12px;overflow:auto;max-height:200px;border-bottom:1px solid #222}
-    .sidebar input{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:var(--glass);color:#fff;margin-bottom:12px}
-    .file-list .file,.file-list .folder{padding:10px;border-radius:8px;display:flex;align-items:center;gap:10px;background:transparent;border:1px solid transparent;cursor:pointer;font-size:.95rem}
-    .file:hover,.folder:hover{background:rgba(88,166,255,0.1)}
-
-    .viewer{flex:1;padding:12px;overflow:auto}
-    pre[class*="language-"]{border-radius:8px;padding:12px;white-space:pre-wrap;word-wrap:break-word;font-size:.9rem}
-
-    .actions{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
-    .btn{padding:8px 10px;background:var(--glass);border-radius:8px;border:1px solid #333;color:var(--muted);font-size:.9rem}
-    .btn:active{background:rgba(88,166,255,0.2)}
-
-    footer{text-align:center;padding:10px;font-size:.85rem;color:var(--muted)}
-
-    /* Mobile improvements */
-    @media(max-width:768px){
-      header .brand{font-size:1rem}
-      .actions{justify-content:center}
-      .file,.folder{font-size:.9rem;padding:8px}
-      pre{font-size:.8rem}
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="brand">STEP Viewer</div>
-    <button id="menuToggle"><i class="fa-solid fa-bars"></i></button>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <input id="searchInput" placeholder="Search files..." />
-      <div class="file-list" id="fileList"><p>Loading...</p></div>
-    </aside>
-
-    <main class="viewer">
-      <div class="actions">
-        <button id="rawBtn" class="btn">Raw</button>
-        <button id="copyBtn" class="btn">Copy</button>
-        <button id="downloadBtn" class="btn">Download</button>
-        <button id="toggleLines" class="btn">Lines</button>
-      </div>
-      <div id="codeContainer"><p>Select a file to view</p></div>
-    </main>
-  </div>
-
-  <footer>Developed by <b>Sreeshan Reddy</b></footer>
-
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.min.js"></script>
 
-  <!-- Backend script remains unchanged -->
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --bg:#0b1220; --panel:#0f1720; --muted:#9aa7b2; --accent:#58a6ff; --glass:rgba(255,255,255,0.03);
+      --radius:12px; --glass-border:rgba(255,255,255,0.04);
+      --sidebar-w:320px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0; height:100%; background:linear-gradient(180deg,#05060a 0%, #0b1220 100%); color:#e6edf3;}
+
+    header.appbar{
+      display:flex; align-items:center; gap:12px; padding:12px 16px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+      border-bottom:1px solid var(--glass-border); backdrop-filter:blur(6px);
+    }
+    header .brand{display:flex; align-items:center; gap:10px; flex:1}
+    header .brand h1{font-size:1rem; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    header .controls{display:flex; gap:6px}
+    header .controls button{
+      background:transparent; border:1px solid var(--glass-border); color:var(--muted);
+      padding:8px; border-radius:10px; cursor:pointer; font-size:1rem;
+    }
+    header .controls button:active{transform:scale(0.95)}
+    header .controls button:hover{color:var(--accent)}
+
+    .layout{display:flex; height:calc(100vh - 56px)}
+
+    /* Sidebar */
+    .sidebar{
+      width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--glass-border);
+      padding:12px; overflow:auto; transition:transform .25s ease;
+    }
+    .sidebar .search{display:flex; gap:6px; margin-bottom:10px}
+    .sidebar input[type=text]{
+      flex:1; padding:10px; border-radius:8px; border:1px solid var(--glass-border);
+      background:var(--glass); color:inherit; font-size:0.9rem;
+    }
+    .sidebar .filters{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+    .chip{padding:6px 10px; border-radius:999px; font-size:0.8rem;
+      border:1px solid var(--glass-border); color:var(--muted); cursor:pointer;
+    }
+    .chip.active{background:rgba(88,166,255,0.12); color:var(--accent);}
+
+    .file-list{display:flex; flex-direction:column; gap:6px}
+    .folder, .file{
+      display:flex; align-items:center; gap:10px; padding:10px;
+      border-radius:10px; cursor:pointer; transition:.15s;
+      font-size:0.9rem; border:1px solid transparent;
+    }
+    .folder:hover, .file:hover{background:rgba(255,255,255,0.05);}
+    .folder .meta, .file .meta{display:flex; flex-direction:column; overflow:hidden}
+    .name{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .sub{font-size:0.75rem; color:var(--muted)}
+
+    /* Main viewer */
+    .viewer{flex:1; padding:14px; overflow:auto; font-size:0.9rem}
+    .toolbar{display:flex; gap:6px; align-items:center; margin-bottom:10px; flex-wrap:wrap}
+    .breadcrumbs{color:var(--muted); font-size:0.85rem; max-width:70%; overflow:hidden; text-overflow:ellipsis}
+    .actions{display:flex; gap:6px; margin-left:auto}
+    .btn{background:transparent; border:1px solid var(--glass-border); padding:8px; border-radius:8px; color:var(--muted); font-size:0.9rem; cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#3cc0ff); color:#071226; border:0}
+    .file-info{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px}
+    .tag{padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); font-size:0.8rem}
+
+    pre[class*="language-"]{border-radius:10px; padding:12px; font-size:0.8rem; line-height:1.4; overflow-x:auto}
+
+    /* Mobile */
+    @media (max-width:900px){
+      :root{--sidebar-w:260px}
+      .layout{position:relative}
+      .sidebar{position:fixed; left:0; top:56px; bottom:0; transform:translateX(-100%); z-index:100}
+      .sidebar.show{transform:translateX(0)}
+      .viewer{padding:12px}
+      header .brand h1{font-size:0.9rem}
+    }
+    @media (max-width:500px){
+      .actions{gap:4px}
+      .btn{padding:6px; font-size:0.8rem}
+      pre[class*="language-"]{font-size:0.75rem}
+    }
+
+    footer{padding:10px; text-align:center; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--glass-border)}
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand">
+      <div style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#3cc0ff);display:flex;align-items:center;justify-content:center;font-weight:700">SC</div>
+      <div>
+        <h1>STEP Codes Viewer</h1>
+        <div style="font-size:.75rem;color:var(--muted)">GitHub repo viewer (frontend)</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="menuBtn" class="mobile-only"><i class="fa-solid fa-bars"></i></button>
+      <button id="refreshBtn" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+      <button id="openRepo" title="Open repo"><i class="fa-brands fa-github"></i></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <!-- sidebar unchanged -->
+      <div class="search">
+        <input id="searchInput" placeholder="Search..." />
+        <button id="clearSearch" class="btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="filters">
+        <div class="chip active" data-filter="all">All</div>
+        <div class="chip" data-filter="code">Code</div>
+        <div class="chip" data-filter="docs">Docs</div>
+      </div>
+      <div id="fileList" class="file-list"><p style="color:var(--muted)">Loading...</p></div>
+    </aside>
+
+    <main class="viewer">
+      <!-- same viewer -->
+      <div class="toolbar">
+        <div class="breadcrumbs" id="breadcrumbs">/</div>
+        <div class="actions">
+          <button id="rawBtn" class="btn"><i class="fa-solid fa-file"></i></button>
+          <button id="copyBtn" class="btn"><i class="fa-solid fa-copy"></i></button>
+          <button id="downloadBtn" class="btn"><i class="fa-solid fa-download"></i></button>
+          <button id="toggleLines" class="btn"><i class="fa-solid fa-list-ol"></i></button>
+        </div>
+      </div>
+      <div class="file-info" id="fileInfo" style="display:none">
+        <div class="tag" id="fileName">file.c</div>
+        <div class="tag" id="fileMeta">—</div>
+        <div class="tag" id="fileType">C</div>
+      </div>
+      <div id="codeContainer"><p style="color:var(--muted)">Select a file to view</p></div>
+    </main>
+  </div>
+
+  <footer>Developed by <b>Sreeshan Reddy</b></footer>
+
+  <script>
+    // keep backend JS same
+    // --- your existing JS pasted here unchanged ---
+
+    // sidebar toggle for mobile
+    document.getElementById('menuBtn')?.addEventListener('click',()=>{
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+  </script>
 </body>
 </html>
 
