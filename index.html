@@ -171,6 +171,7 @@
     const username = "Sreeshan-dev";
     const repo = "STEP-3RD-SEM";
     const apiBase = `https://api.github.com/repos/${username}/${repo}/contents`;
+    const GITHUB_TOKEN = "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"; // <-- Add your new token here
 
     const fileListEl = document.getElementById('fileList');
     const breadcrumbs = document.getElementById('breadcrumbs');
@@ -209,14 +210,20 @@
       }
     });
 
+    // <-- Only change is here -->
     async function fetchFiles(path=''){
       try{
-        const res = await fetch(`${apiBase}/${path}`);
+        const res = await fetch(`${apiBase}/${path}`, {
+          headers: {
+            "Authorization": `token ${GITHUB_TOKEN}`
+          }
+        });
         return res.json();
       }catch(e){
         return {message: e.message}
       }
     }
+    // <-- end change -->
 
     function isAllowedFolder(name){ return /^WEEK\d+$/i.test(name); }
     function humanSize(bytes){ if (bytes==null) return '—'; const u=['B','KB','MB','GB']; let i=0; while(bytes>=1024 && i<u.length-1){bytes/=1024;i} return bytes.toFixed(bytes<10?2:1)+u[i]; }
@@ -320,4 +327,3 @@ document.getElementById('backBtn').addEventListener('click', () => {
   </script>
 </body>
 </html>
-
