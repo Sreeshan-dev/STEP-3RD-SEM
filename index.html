@@ -2,43 +2,82 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>STEP – Week Viewer</title>
+  <title>STEP – Repo Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {font-family: system-ui, sans-serif; max-width: 1100px; margin: 20px auto; padding: 0 16px;}
-    nav {margin-bottom: 20px;}
-    nav a {margin-right: 12px; color: blue; text-decoration: none; font-weight: 500;}
-    nav a:hover {text-decoration: underline;}
-    #content {border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 300px;}
-    iframe {width: 100%; height: 500px; border: none;}
+    h1 {margin-bottom: 20px;}
+    #menu {margin-bottom: 20px;}
+    .folder {margin: 10px 0; padding: 8px; border: 1px solid #ddd; border-radius: 8px;}
+    .folder-title {font-weight: bold; cursor: pointer; margin-bottom: 6px;}
+    .files {margin-left: 20px; display: none;}
+    a {color: blue; text-decoration: none;}
+    a:hover {text-decoration: underline;}
   </style>
 </head>
 <body>
-  <h1>STEP – Week Viewer</h1>
-  <nav id="menu"></nav>
-  <div id="content">Choose a week to view content.</div>
+  <h1>STEP – Repo Viewer</h1>
+  <div id="menu">Loading repo contents...</div>
 
   <script>
-    // 👉 Point to your week folders here
-    const weeks = {
-      "Week 1": "WEEK 1/index.html",
-      "Week 2": "WEEK 2/index.html"
-      // Add more weeks like this:
-      // "Week 3": "WEEK 3/index.html"
-    };
+    // 👉 CHANGE THESE TO YOUR GITHUB INFO
+    const owner = "your-username";   // GitHub username
+    const repo = "your-repo";        // Repository name
+    const branch = "main";           // or "master"
 
-    // Build the navigation menu
-    const menu = document.getElementById("menu");
-    for (let week in weeks) {
-      const link = document.createElement("a");
-      link.href = "#";
-      link.textContent = week;
-      link.onclick = () => {
-        document.getElementById("content").innerHTML =
-          `<iframe src="${weeks[week]}"></iframe>`;
-      };
-      menu.appendChild(link);
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+
+    async function fetchFolder(path = "") {
+      const res = await fetch(apiUrl + path + `?ref=${branch}`);
+      return await res.json();
     }
+
+    function createFolder(name, files) {
+      const div = document.createElement("div");
+      div.className = "folder";
+
+      const title = document.createElement("div");
+      title.className = "folder-title";
+      title.textContent = "📂 " + name;
+      div.appendChild(title);
+
+      const fileList = document.createElement("div");
+      fileList.className = "files";
+
+      files.forEach(f => {
+        const link = document.createElement("a");
+        link.href = f.html_url;
+        link.target = "_blank";
+        link.textContent = f.type === "dir" ? "📁 " + f.name : "📄 " + f.name;
+        fileList.appendChild(link);
+        fileList.appendChild(document.createElement("br"));
+      });
+
+      div.appendChild(fileList);
+
+      // toggle expand/collapse
+      title.onclick = () => {
+        fileList.style.display = fileList.style.display === "none" ? "block" : "none";
+      };
+
+      return div;
+    }
+
+    async function buildMenu() {
+      const menu = document.getElementById("menu");
+      menu.innerHTML = "";
+
+      const weeks = await fetchFolder(""); // root
+
+      for (const week of weeks) {
+        if (week.type === "dir") {
+          const files = await fetchFolder(week.path);
+          menu.appendChild(createFolder(week.name, files));
+        }
+      }
+    }
+
+    buildMenu();
   </script>
 </body>
 </html>
