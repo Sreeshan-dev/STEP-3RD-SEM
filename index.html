@@ -62,7 +62,15 @@
     .folder, .file { display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; cursor:pointer; transition:all .13s; border:1px solid transparent }
     .folder:hover, .file:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(2,6,23,0.6) }
     .folder .meta, .file .meta { display:flex; flex-direction:column }
-    .folder .name, .file .name { font-weight:600; color:#e0e6f0 }
+    .folder .name, .file .name { font-weight:600; color:var(--muted) }
+    .folder i, .file i {
+  color: var(--accent);
+}
+
+[data-theme="light"] .folder i, [data-theme="light"] .file i {
+  color: #333;
+}
+
     [data-theme="light"] .folder .name, [data-theme="light"] .file .name { color:#111 }
     .meta .sub { font-size:0.8rem; color:var(--muted) }
 
@@ -134,14 +142,15 @@
 
     <main class="viewer">
       <div class="toolbar">
-        <div class="breadcrumbs" id="breadcrumbs">/</div>
-        <div class="actions">
-          <button id="rawBtn" class="btn" title="Open raw file"><i class="fa-solid fa-file"></i> Raw</button>
-          <button id="copyBtn" class="btn" title="Copy code"><i class="fa-solid fa-copy"></i> Copy</button>
-          <button id="downloadBtn" class="btn" title="Download file"><i class="fa-solid fa-download"></i> Download</button>
-          <button id="toggleLines" class="btn" title="Toggle line numbers"><i class="fa-solid fa-list-ol"></i></button>
-        </div>
-      </div>
+  <button id="backBtn" class="btn" title="Go Back"><i class="fa-solid fa-arrow-left"></i></button>
+  <div class="breadcrumbs" id="breadcrumbs">/</div>
+  <div class="actions">
+    <button id="rawBtn" class="btn" title="Open raw file"><i class="fa-solid fa-file"></i> Raw</button>
+    <button id="copyBtn" class="btn" title="Copy code"><i class="fa-solid fa-copy"></i> Copy</button>
+    <button id="downloadBtn" class="btn" title="Download file"><i class="fa-solid fa-download"></i> Download</button>
+    <button id="toggleLines" class="btn" title="Toggle line numbers"><i class="fa-solid fa-list-ol"></i></button>
+  </div>
+</div>
 
       <div class="file-info" id="fileInfo" style="display:none">
         <div class="tag" id="fileName">file.c</div>
@@ -299,6 +308,12 @@ function filterFiles(type){
   }
   renderList(filtered);
 }
+document.getElementById('backBtn').addEventListener('click', () => {
+  if (!currentPath) return; // Already at root
+  const parts = currentPath.split('/');
+  parts.pop(); // Remove last folder/file
+  loadFileList(parts.join('/'));
+});
 
     // Initial load
     loadFileList();
