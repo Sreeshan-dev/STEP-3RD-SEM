@@ -1,205 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STEP Codes – Viewer</title>
+  <meta charset="utf-8" />
+  <title>Week Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f4f6fb;
-      color: #333;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 14px;
     }
     header {
-      background: linear-gradient(135deg, #74ABE2, #5563DE);
-      color: white;
-      padding: 1rem 2rem;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
     }
-    header h2 {
-      margin: 0;
-      font-size: 1.8rem;
-    }
-    main {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 1rem;
-      padding: 1rem;
-      max-width: 1200px;
-      margin: auto;
-    }
-    aside, section {
-      background: white;
-      border-radius: 10px;
-      padding: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    h3 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 0.5rem;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    li {
-      margin: 0.5rem 0;
-    }
-    a {
-      color: #5563DE;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    a:hover {
+    nav a {
+      margin-right: 12px;
+      cursor: pointer;
+      color: blue;
       text-decoration: underline;
     }
-    pre {
-      background: #1e1e1e;
-      color: #eee;
-      padding: 1rem;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-    .muted {
-      color: #888;
-      font-style: italic;
-    }
-    .small {
-      font-size: 0.8rem;
-      margin-left: 6px;
+    .panel {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      min-height: 300px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h2 id="title">Loading...</h2>
+    <h1>STEP – Week Viewer</h1>
   </header>
+  <nav>
+    <a onclick="loadFile('WEEK 1/index.html')">Week 1</a>
+    <a onclick="loadFile('WEEK 2/index.html')">Week 2</a>
+  </nav>
 
-  <main>
-    <aside>
-      <h3>📂 Folder Contents</h3>
-      <ul id="contents"><li class="muted">Loading...</li></ul>
-    </aside>
-    <section>
-      <h3>📝 Preview</h3>
-      <div id="pathinfo" class="muted">No file selected</div>
-      <pre id="viewer">Select a file to preview its contents.</pre>
-    </section>
-  </main>
+  <div id="viewer" class="panel">
+    <p>Select a week to view its contents.</p>
+  </div>
 
   <script>
-    const cfg = {
-      USER: "Sreeshan-dev",
-      REPO: "STEP-3RD-SEM",
-      BRANCH: "main"
-    };
-
-    const params = new URLSearchParams(location.search);
-    const DIR = params.get('dir') || params.get('week') || 'Week1';
-    const SUB = params.get('sub') || null;
-    document.getElementById('title').textContent = DIR + (SUB ? ' / ' + SUB : '');
-
-    async function listDir(pathParts) {
-      const path = pathParts.map(encodeURIComponent).join('/');
-      const apiUrl = `https://api.github.com/repos/${cfg.USER}/${cfg.REPO}/contents/${path}?ref=${cfg.BRANCH}`;
+    async function loadFile(path) {
+      const url = `https://api.github.com/repos/Sreeshan-dev/STEP-3RD-SEM/contents/${path}?ref=main`;
       try {
-        const res = await fetch(apiUrl);
-        const items = await res.json();
-        if (!Array.isArray(items)) throw new Error('Not a folder');
-        return items;
-      } catch (e) {
-        console.error(e);
-        return null;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch " + path);
+        const data = await res.json();
+        const html = atob(data.content); // decode base64
+        document.getElementById("viewer").innerHTML = html;
+      } catch (err) {
+        document.getElementById("viewer").innerHTML = `<b>Error:</b> ${err.message}`;
       }
     }
-
-    function makeGitHubTreeUrl(parts) {
-      return `https://github.com/${cfg.USER}/${cfg.REPO}/tree/${cfg.BRANCH}/` + parts.map(encodeURIComponent).join('/');
-    }
-
-    async function render() {
-      const listEl = document.getElementById('contents');
-      listEl.innerHTML = '';
-      const pathParts = [DIR];
-      const items = await listDir(pathParts);
-      if (!items) {
-        listEl.innerHTML = '<li class="muted">Could not load folder. Is the repo public?</li>';
-        return;
-      }
-
-      if (!SUB) {
-        const dirs = items.filter(i=>i.type==='dir');
-        const files = items.filter(i=>i.type==='file');
-
-        if (dirs.length === 0 && files.length === 0) {
-          listEl.innerHTML = '<li class="muted">Folder is empty.</li>'; return;
-        }
-
-        dirs.forEach(d => {
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="week.html?dir=${DIR}&sub=${d.name}">${d.name}/</a> 
-                          <a class="small" href="${makeGitHubTreeUrl([DIR, d.name])}" target="_blank">(GitHub)</a>`;
-          listEl.appendChild(li);
-        });
-
-        files.forEach(f => {
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="#">${f.name}</a>
-                          <a class="small" href="${f.download_url}" target="_blank">raw</a>`;
-          li.querySelector('a').addEventListener('click', (e)=>{ e.preventDefault(); previewFile(f); });
-          listEl.appendChild(li);
-        });
-      } else {
-        const items2 = await listDir([DIR, SUB]);
-        if (!items2) { listEl.innerHTML = '<li class="muted">Unable to read subfolder.</li>'; return; }
-
-        const back = document.createElement('li');
-        back.innerHTML = `<a href="week.html?dir=${DIR}">← Back to ${DIR}</a>`;
-        listEl.appendChild(back);
-
-        const dirs = items2.filter(i=>i.type==='dir');
-        const files = items2.filter(i=>i.type==='file');
-
-        dirs.forEach(d => {
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="week.html?dir=${DIR}&sub=${SUB}/${d.name}">${d.name}/</a>
-                          <a class="small" href="${makeGitHubTreeUrl([DIR, SUB, d.name])}" target="_blank">(GitHub)</a>`;
-          listEl.appendChild(li);
-        });
-
-        files.forEach(f => {
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="#">${f.name}</a>
-                          <a class="small" href="${f.download_url}" target="_blank">raw</a>`;
-          li.querySelector('a').addEventListener('click',(e)=>{ e.preventDefault(); previewFile(f); });
-          listEl.appendChild(li);
-        });
-      }
-    }
-
-    async function previewFile(file) {
-      const viewer = document.getElementById('viewer');
-      const pathInfo = document.getElementById('pathinfo');
-      const filePath = (SUB ? `${DIR}/${SUB}/${file.name}` : `${DIR}/${file.name}`);
-      pathInfo.textContent = filePath;
-      try {
-        const res = await fetch(file.download_url);
-        const text = await res.text();
-        viewer.textContent = text;
-      } catch (e) {
-        viewer.innerHTML = '<span class="muted">Could not preview file. Use raw link.</span>';
-      }
-    }
-
-    render();
   </script>
 </body>
 </html>
