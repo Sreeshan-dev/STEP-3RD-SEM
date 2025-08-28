@@ -1,173 +1,124 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Week Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:1100px;margin:20px auto;padding:0 16px;display:grid;gap:14px}
-    header{display:flex;align-items:baseline;gap:12px}
-    .grid{display:grid;grid-template-columns:320px 1fr;gap:14px}
-    .panel{border:1px solid #eee;border-radius:10px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    ul{list-style:none;padding:0;margin:0} li{margin:8px 0}
-    .muted{color:#666} a{color:inherit}
-    pre{white-space:pre-wrap;word-wrap:break-word;overflow:auto;max-height:60vh}
-    .small{font-size:12px;color:#444;margin-left:6px}
-  </style>
-</head>
-<body>
-  <header>
-    <a href="index.html">← Back</a>
-    <h2 id="title" style="margin:0">Week</h2>
-  </header>
+<script>
+  const cfg = {
+    USER: "Sreeshan-dev",   // GitHub username
+    REPO: "STEP-3RD-SEM",   // Repository name
+    BRANCH: "main"          // Branch name
+  };
 
-  <div class="grid">
-    <div class="panel">
-      <h3>Contents</h3>
-      <ul id="contents"><li class="muted">Loading…</li></ul>
-    </div>
+  const params = new URLSearchParams(location.search);
+  const DIR = params.get('dir') || params.get('week') || 'Week1';
+  const SUB = params.get('sub') || null;
+  document.getElementById('title').textContent = DIR + (SUB ? ' / ' + SUB : '');
 
-    <div class="panel">
-      <div class="muted small" id="pathinfo"></div>
-      <pre id="viewer"><span class="muted">Select a file to preview its contents here.</span></pre>
-    </div>
-  </div>
-
-  <script>
-    function detectUserRepo() {
-      const host = location.hostname;
-      const hostParts = host.split('.');
-      let USER = hostParts[0] || '';
-      const pathParts = location.pathname.split('/').filter(Boolean);
-      let REPO = pathParts[0] || '';
-      return {USER, REPO, BRANCH: 'main'};
+  async function listDir(pathParts) {
+    const path = pathParts.map(encodeURIComponent).join('/');
+    const apiUrl = `https://api.github.com/repos/${cfg.USER}/${cfg.REPO}/contents/${path}?ref=${cfg.BRANCH}`;
+    try {
+      const res = await fetch(apiUrl);
+      const items = await res.json();
+      if (!Array.isArray(items)) throw new Error('No array');
+      return items;
+    } catch (e) {
+      console.error(e);
+      return null;
     }
-    const cfg = detectUserRepo();
+  }
 
-    const params = new URLSearchParams(location.search);
-    const DIR = params.get('dir') || params.get('week') || 'Week1';
-    const SUB = params.get('sub') || null;
-    document.getElementById('title').textContent = DIR + (SUB ? ' / ' + SUB : '');
+  function makeGitHubTreeUrl(parts) {
+    return `https://github.com/${cfg.USER}/${cfg.REPO}/tree/${cfg.BRANCH}/` + parts.map(encodeURIComponent).join('/');
+  }
 
-    async function listDir(pathParts) {
-      const path = pathParts.map(encodeURIComponent).join('/');
-      const apiUrl = `https://api.github.com/repos/${cfg.USER}/${cfg.REPO}/contents/${path}?ref=${cfg.BRANCH}`;
-      try {
-        const res = await fetch(apiUrl);
-        const items = await res.json();
-        if (!Array.isArray(items)) throw new Error('No array');
-        return items;
-      } catch (e) {
-        console.error(e);
-        return null;
-      }
+  async function render() {
+    const listEl = document.getElementById('contents');
+    listEl.innerHTML = '';
+    const pathParts = [DIR];
+    const items = await listDir(pathParts);
+    if (!items) {
+      listEl.innerHTML = '<li class="muted">Could not load contents. Is the repo public and Pages enabled?</li>';
+      return;
     }
 
-    function makeGitHubTreeUrl(parts) {
-      return `https://github.com/${cfg.USER}/${cfg.REPO}/tree/${cfg.BRANCH}/` + parts.map(encodeURIComponent).join('/');
-    }
+    if (!SUB) {
+      const dirs = items.filter(i=>i.type==='dir');
+      const files = items.filter(i=>i.type==='file');
 
-    async function render() {
-      const listEl = document.getElementById('contents');
-      listEl.innerHTML = '';
-      // If SUB exists, show files inside DIR/SUB. Otherwise, show directories and files in DIR.
-      const pathParts = [DIR];
-      const items = await listDir(pathParts);
-      if (!items) {
-        listEl.innerHTML = '<li class="muted">Could not load contents. Is the repo public and Pages enabled?</li>';
-        return;
+      if (dirs.length === 0 && files.length === 0) {
+        listEl.innerHTML = '<li class="muted">Folder is empty.</li>'; return;
       }
 
-      // If SUB is not set: list directories (Practice Problems, Lab, HW) first, then files.
-      if (!SUB) {
-        const dirs = items.filter(i=>i.type==='dir');
-        const files = items.filter(i=>i.type==='file');
+      dirs.forEach(d => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.textContent = d.name + '/';
+        a.href = `week.html?dir=${encodeURIComponent(DIR)}&sub=${encodeURIComponent(d.name)}`;
+        li.appendChild(a);
+        const gh = document.createElement('a');
+        gh.href = makeGitHubTreeUrl([DIR, d.name]);
+        gh.textContent = ' (GitHub)';
+        gh.className = 'small'; gh.target = '_blank';
+        li.appendChild(gh);
+        listEl.appendChild(li);
+      });
 
-        if (dirs.length === 0 && files.length === 0) {
-          listEl.innerHTML = '<li class="muted">Folder is empty.</li>'; return;
-        }
+      files.forEach(f => {
+        const li = document.createElement('li');
+        const a = document.createElement('a'); a.href = '#'; a.textContent = f.name;
+        a.addEventListener('click', (e)=>{ e.preventDefault(); previewFile(f); });
+        li.appendChild(a);
+        const raw = document.createElement('a'); raw.href = f.download_url; raw.textContent = ' raw'; raw.className='small'; raw.target='_blank';
+        li.appendChild(raw);
+        listEl.appendChild(li);
+      });
+    } else {
+      const items2 = await listDir([DIR, SUB]);
+      if (!items2) { listEl.innerHTML = '<li class="muted">Unable to read subfolder.</li>'; return; }
+      const files = items2.filter(i=>i.type==='file');
+      const dirs = items2.filter(i=>i.type==='dir');
 
-        // Show directories
+      const backLi = document.createElement('li');
+      backLi.innerHTML = `<a href="week.html?dir=${encodeURIComponent(DIR)}">← Back to ${DIR}</a>`;
+      listEl.appendChild(backLi);
+
+      if (files.length === 0 && dirs.length === 0) {
+        listEl.innerHTML += '<li class="muted">No files here.</li>';
+      } else {
         dirs.forEach(d => {
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.textContent = d.name + '/';
-          a.href = `week.html?dir=${encodeURIComponent(DIR)}&sub=${encodeURIComponent(d.name)}`;
+          a.href = `week.html?dir=${encodeURIComponent(DIR)}&sub=${encodeURIComponent(SUB + '/' + d.name)}`;
           li.appendChild(a);
-          const gh = document.createElement('a');
-          gh.href = makeGitHubTreeUrl([DIR, d.name]);
-          gh.textContent = ' (GitHub)';
-          gh.className = 'small'; gh.target = '_blank';
+          const gh = document.createElement('a'); gh.href = makeGitHubTreeUrl([DIR, SUB, d.name]); gh.textContent=' (GitHub)'; gh.className='small'; gh.target='_blank';
           li.appendChild(gh);
           listEl.appendChild(li);
         });
 
-        // Show files directly in DIR (if any)
         files.forEach(f => {
           const li = document.createElement('li');
-          const a = document.createElement('a'); a.href = '#'; a.textContent = f.name;
-          a.addEventListener('click', (e)=>{ e.preventDefault(); previewFile(f); });
+          const a = document.createElement('a'); a.href='#'; a.textContent = f.name;
+          a.addEventListener('click',(e)=>{ e.preventDefault(); previewFile(f); });
           li.appendChild(a);
-          const raw = document.createElement('a'); raw.href = f.download_url; raw.textContent = ' raw'; raw.className='small'; raw.target='_blank';
+          const raw = document.createElement('a'); raw.href=f.download_url; raw.textContent=' raw'; raw.className='small'; raw.target='_blank';
           li.appendChild(raw);
           listEl.appendChild(li);
         });
-      } else {
-        // SUB exists: list files inside DIR/SUB
-        const items2 = await listDir([DIR, SUB]);
-        if (!items2) { listEl.innerHTML = '<li class="muted">Unable to read subfolder.</li>'; return; }
-        const files = items2.filter(i=>i.type==='file');
-        const dirs = items2.filter(i=>i.type==='dir');
-
-        // show back to parent link
-        const backLi = document.createElement('li');
-        backLi.innerHTML = `<a href="week.html?dir=${encodeURIComponent(DIR)}">← Back to ${DIR}</a>`;
-        listEl.appendChild(backLi);
-
-        if (files.length === 0 && dirs.length === 0) {
-          listEl.innerHTML += '<li class="muted">No files here.</li>';
-        } else {
-          // directories (rare in your structure) first
-          dirs.forEach(d => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.textContent = d.name + '/';
-            a.href = `week.html?dir=${encodeURIComponent(DIR)}&sub=${encodeURIComponent(SUB + '/' + d.name)}`;
-            li.appendChild(a);
-            const gh = document.createElement('a'); gh.href = makeGitHubTreeUrl([DIR, SUB, d.name]); gh.textContent=' (GitHub)'; gh.className='small'; gh.target='_blank';
-            li.appendChild(gh);
-            listEl.appendChild(li);
-          });
-
-          files.forEach(f => {
-            const li = document.createElement('li');
-            const a = document.createElement('a'); a.href='#'; a.textContent = f.name;
-            a.addEventListener('click',(e)=>{ e.preventDefault(); previewFile(f); });
-            li.appendChild(a);
-            const raw = document.createElement('a'); raw.href=f.download_url; raw.textContent=' raw'; raw.className='small'; raw.target='_blank';
-            li.appendChild(raw);
-            listEl.appendChild(li);
-          });
-        }
       }
     }
+  }
 
-    async function previewFile(file) {
-      const viewer = document.getElementById('viewer');
-      const pathInfo = document.getElementById('pathinfo');
-      // show path info
-      const filePath = (SUB ? `${DIR}/${SUB}/${file.name}` : `${DIR}/${file.name}`);
-      pathInfo.textContent = filePath;
-      try {
-        const res = await fetch(file.download_url);
-        const text = await res.text();
-        viewer.textContent = text;
-      } catch (e) {
-        viewer.innerHTML = '<span class="muted">Could not preview file. Use the raw link to open/download.</span>';
-      }
+  async function previewFile(file) {
+    const viewer = document.getElementById('viewer');
+    const pathInfo = document.getElementById('pathinfo');
+    const filePath = (SUB ? `${DIR}/${SUB}/${file.name}` : `${DIR}/${file.name}`);
+    pathInfo.textContent = filePath;
+    try {
+      const res = await fetch(file.download_url);
+      const text = await res.text();
+      viewer.textContent = text;
+    } catch (e) {
+      viewer.innerHTML = '<span class="muted">Could not preview file. Use the raw link to open/download.</span>';
     }
+  }
 
-    render();
-  </script>
-</body>
-</html>
+  render();
+</script>
