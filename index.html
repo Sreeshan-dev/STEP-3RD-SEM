@@ -2,69 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STEP Codes Viewer</title>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #1f4037, #99f2c8);
-      color: white;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #0d1117;
+      color: #e6edf3;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #161b22;
+      padding: 1rem;
       text-align: center;
-      padding: 40px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 2px solid #30363d;
     }
-    h1 {
-      margin-bottom: 30px;
+    #container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
     }
-    .week {
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px auto;
-      width: 300px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    #file-list {
+      width: 280px;
+      background: #161b22;
+      border-right: 2px solid #30363d;
+      padding: 1rem;
+      overflow-y: auto;
     }
-    .week h2 {
-      margin-bottom: 10px;
-    }
-    a {
+    #file-list a {
       display: block;
-      margin: 8px;
-      padding: 10px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
-      color: white;
+      padding: 6px;
+      margin: 4px 0;
+      color: #58a6ff;
       text-decoration: none;
-      transition: 0.2s;
+      border-radius: 6px;
     }
-    a:hover {
-      background: rgba(255,255,255,0.4);
+    #file-list a:hover {
+      background: #238636;
+      color: white;
+    }
+    #viewer {
+      flex: 1;
+      padding: 1rem;
+      overflow: auto;
+      background: #0d1117;
+    }
+    pre {
+      background: #161b22 !important;
+      padding: 1rem;
+      border-radius: 10px;
+      overflow-x: auto;
     }
     footer {
-      margin-top: 40px;
-      font-size: 14px;
+      background: #161b22;
+      text-align: center;
+      padding: 0.7rem;
+      border-top: 2px solid #30363d;
+      font-size: 0.9rem;
+      color: #8b949e;
     }
   </style>
 </head>
 <body>
-  <h1>📚 STEP Codes Viewer</h1>
-
-  <div class="week">
-    <h2>WEEK 1</h2>
-    <a href="WEEK1/HW/">Homework</a>
-    <a href="WEEK1/PRACTICE/">Practice</a>
-    <a href="WEEK1/LAB/">Lab</a>
+  <header>📚 STEP Codes Viewer</header>
+  <div id="container">
+    <div id="file-list"><p>Loading...</p></div>
+    <div id="viewer"><p>Select a file to view</p></div>
   </div>
+  <footer>Developed by <b>Sreeshan Reddy</b></footer>
 
-  <div class="week">
-    <h2>WEEK 2</h2>
-    <a href="WEEK2/HW/">Homework</a>
-    <a href="WEEK2/PRACTICE/">Practice</a>
-    <a href="WEEK2/LAB/">Lab</a>
-  </div>
+  <script>
+    const username = "Sreeshan-dev";
+    const repo = "STEP-3RD-SEM";
+    const apiBase = `https://api.github.com/repos/${username}/${repo}/contents`;
 
-  <!-- You can copy-paste this block and edit for WEEK 3, 4, etc. -->
+    async function fetchFiles(path = "") {
+      const res = await fetch(`${apiBase}/${path}`);
+      return await res.json();
+    }
 
-  <footer>
-    Developed by <b>Sreeshan Reddy</b>
-  </footer>
+    async function loadFileList(path = "") {
+      const list = document.getElementById("file-list");
+      list.innerHTML = "";
+
+      const files = await fetchFiles(path);
+      if (files.message) {
+        list.innerHTML = `<p>Error: ${files.message}</p>`;
+        return;
+      }
+
+      files.sort((a, b) => a.type.localeCompare(b.type));
+
+      files.forEach(file => {
+        const link = document.createElement("a");
+        link.textContent = (file.type === "dir" ? "📁 " : "📄 ") + file.name;
+        link.href = "#";
+
+        link.onclick = (e) => {
+          e.preventDefault();
+          if (file.type === "dir") {
+            loadFileList(file.path);
+          } else {
+            loadFileContent(file.path);
+          }
+        };
+        list.appendChild(link);
+      });
+    }
+
+    async function loadFileContent(path) {
+      const viewer = document.getElementById("viewer");
+      viewer.innerHTML = "<p>Loading file...</p>";
+
+      const res = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`);
+      const text = await res.text();
+
+      let lang = "clike";
+      if (path.endsWith(".c")) lang = "c";
+      if (path.endsWith(".cpp") || path.endsWith(".cc")) lang = "cpp";
+      if (path.endsWith(".java")) lang = "java";
+
+      viewer.innerHTML = `<pre><code class="language-${lang}">${escapeHtml(text)}</code></pre>`;
+      Prism.highlightAll();
+    }
+
+    function escapeHtml(text) {
+      const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    loadFileList();
+  </script>
 </body>
 </html>
+
