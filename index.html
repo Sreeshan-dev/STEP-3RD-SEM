@@ -4,84 +4,130 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STEP Code Viewer</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Highlight.js for code highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1f1c2c, #928DAB);
       margin: 0;
+      padding: 0;
+      color: #f5f5f5;
+    }
+    header {
+      background: rgba(0,0,0,0.3);
+      padding: 20px;
+      text-align: center;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
       padding: 20px;
     }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
     .week {
-      background: white;
-      padding: 15px;
-      margin: 15px auto;
-      max-width: 600px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(6px);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    .week:hover {
+      transform: scale(1.02);
     }
     .week h2 {
-      margin: 0 0 10px;
-      color: #444;
+      margin: 0 0 12px;
+      color: #ffd369;
     }
     ul {
       list-style: none;
       padding: 0;
     }
     li {
-      margin: 6px 0;
+      margin: 8px 0;
     }
     a {
       text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
+      color: #00f5d4;
+      font-weight: 600;
       cursor: pointer;
     }
     a:hover {
-      text-decoration: underline;
+      color: #ffd369;
     }
     #viewer {
-      margin-top: 30px;
-      padding: 15px;
+      margin-top: 40px;
+      padding: 20px;
       background: #1e1e1e;
-      color: #f5f5f5;
-      border-radius: 8px;
-      white-space: pre-wrap;
+      border-radius: 12px;
       overflow-x: auto;
-      max-width: 95%;
-      margin-left: auto;
-      margin-right: auto;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    #viewer h3 {
+      margin-top: 0;
+      color: #ffd369;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 15px;
+      background: rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    footer span {
+      color: #00f5d4;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>📘 STEP Code Viewer</h1>
+  <header>📘 STEP Code Viewer</header>
 
-  <!-- Week 1 -->
-  <div class="week">
-    <h2>Week 1</h2>
-    <ul>
-      <li><a onclick="loadFiles('WEEK1/HW')">Homework</a></li>
-      <li><a onclick="loadFiles('WEEK1/LAB')">Lab</a></li>
-      <li><a onclick="loadFiles('WEEK1/PRACTICE')">Practice</a></li>
-    </ul>
+  <div class="container">
+
+    <!-- Week 1 -->
+    <div class="week">
+      <h2>Week 1</h2>
+      <ul>
+        <li><a onclick="loadFiles('WEEK1/HW')">📂 Homework</a></li>
+        <li><a onclick="loadFiles('WEEK1/LAB')">📂 Lab</a></li>
+        <li><a onclick="loadFiles('WEEK1/PRACTICE')">📂 Practice</a></li>
+      </ul>
+    </div>
+
+    <!-- Week 2 -->
+    <div class="week">
+      <h2>Week 2</h2>
+      <ul>
+        <li><a onclick="loadFiles('WEEK2/HW')">📂 Homework</a></li>
+        <li><a onclick="loadFiles('WEEK2/LAB')">📂 Lab</a></li>
+        <li><a onclick="loadFiles('WEEK2/PRACTICE')">📂 Practice</a></li>
+      </ul>
+    </div>
+
+    <!-- File Viewer -->
+    <div id="viewer">👉 Select a folder to view files</div>
+
   </div>
 
-  <!-- Week 2 -->
-  <div class="week">
-    <h2>Week 2</h2>
-    <ul>
-      <li><a onclick="loadFiles('WEEK2/HW')">Homework</a></li>
-      <li><a onclick="loadFiles('WEEK2/LAB')">Lab</a></li>
-      <li><a onclick="loadFiles('WEEK2/PRACTICE')">Practice</a></li>
-    </ul>
-  </div>
-
-  <!-- File Viewer -->
-  <div id="viewer">👉 Select a folder to view files</div>
+  <footer>
+    Developed by <span>Sreeshan Reddy</span> 🚀
+  </footer>
 
   <script>
     const username = "Sreeshan-dev";   // ✅ your username
@@ -95,7 +141,7 @@
       let output = `<h3>📂 ${path}</h3><ul>`;
       files.forEach(file => {
         if (file.type === "file") {
-          output += `<li><a onclick="loadFile('${file.path}')">${file.name}</a></li>`;
+          output += `<li><a onclick="loadFile('${file.path}')">📄 ${file.name}</a></li>`;
         }
       });
       output += "</ul>";
@@ -107,7 +153,8 @@
       const response = await fetch(url);
       const text = await response.text();
       document.getElementById("viewer").innerHTML =
-        `<h3>📄 ${filepath}</h3><pre><code>${escapeHtml(text)}</code></pre>`;
+        `<h3>📄 ${filepath}</h3><pre><code class="hljs">${escapeHtml(text)}</code></pre>`;
+      hljs.highlightAll(); // 🔥 syntax highlighting
     }
 
     function escapeHtml(text) {
