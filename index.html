@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STEP Codes</title>
+  <title>STEP Code Viewer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f5f7fa;
       margin: 0;
       padding: 20px;
     }
@@ -18,9 +18,10 @@
     .week {
       background: white;
       padding: 15px;
-      margin: 10px 0;
+      margin: 15px auto;
+      max-width: 600px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     .week h2 {
       margin: 0 0 10px;
@@ -31,37 +32,89 @@
       padding: 0;
     }
     li {
-      margin: 5px 0;
+      margin: 6px 0;
     }
     a {
       text-decoration: none;
       color: #007bff;
+      font-weight: bold;
+      cursor: pointer;
     }
     a:hover {
       text-decoration: underline;
     }
+    #viewer {
+      margin-top: 30px;
+      padding: 15px;
+      background: #1e1e1e;
+      color: #f5f5f5;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-width: 95%;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
 </head>
 <body>
-  <h1>📘 STEP Codes</h1>
+  <h1>📘 STEP Code Viewer</h1>
 
+  <!-- Week 1 -->
   <div class="week">
     <h2>Week 1</h2>
     <ul>
-      <li><a href="WEEK 1/HW/">Homework</a></li>
-      <li><a href="WEEK 1/LAB/">Lab</a></li>
-      <li><a href="WEEK 1/PRACTICE/">Practice</a></li>
+      <li><a onclick="loadFiles('WEEK1/HW')">Homework</a></li>
+      <li><a onclick="loadFiles('WEEK1/LAB')">Lab</a></li>
+      <li><a onclick="loadFiles('WEEK1/PRACTICE')">Practice</a></li>
     </ul>
   </div>
 
+  <!-- Week 2 -->
   <div class="week">
     <h2>Week 2</h2>
     <ul>
-      <li><a href="WEEK 2/HW/">Homework</a></li>
-      <li><a href="WEEK 2/LAB/">Lab</a></li>
-      <li><a href="WEEK 2/PRACTICE/">Practice</a></li>
+      <li><a onclick="loadFiles('WEEK2/HW')">Homework</a></li>
+      <li><a onclick="loadFiles('WEEK2/LAB')">Lab</a></li>
+      <li><a onclick="loadFiles('WEEK2/PRACTICE')">Practice</a></li>
     </ul>
   </div>
 
+  <!-- File Viewer -->
+  <div id="viewer">👉 Select a folder to view files</div>
+
+  <script>
+    const username = "Sreeshan-dev";   // ✅ your username
+    const repo = "STEP-3RD-SEM";      // ✅ your repo name
+
+    async function loadFiles(path) {
+      const url = `https://api.github.com/repos/${username}/${repo}/contents/${path}`;
+      const response = await fetch(url);
+      const files = await response.json();
+
+      let output = `<h3>📂 ${path}</h3><ul>`;
+      files.forEach(file => {
+        if (file.type === "file") {
+          output += `<li><a onclick="loadFile('${file.path}')">${file.name}</a></li>`;
+        }
+      });
+      output += "</ul>";
+      document.getElementById("viewer").innerHTML = output;
+    }
+
+    async function loadFile(filepath) {
+      const url = `https://raw.githubusercontent.com/${username}/${repo}/main/${filepath}`;
+      const response = await fetch(url);
+      const text = await response.text();
+      document.getElementById("viewer").innerHTML =
+        `<h3>📄 ${filepath}</h3><pre><code>${escapeHtml(text)}</code></pre>`;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>'"]/g, c => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+      }[c]));
+    }
+  </script>
 </body>
 </html>
