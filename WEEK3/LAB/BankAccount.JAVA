@@ -1,182 +1,323 @@
-import java.util.Scanner;
+<!doctype html>
+<html lang="en">
 
-class BankAccount {
-    private String accountNumber;
-    private String accountHolderName;
-    private double balance;
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>STEP Codes Viewer</title>
 
-    private static int totalAccounts = 0;
-    private static int accountCounter = 0;
+  <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.min.js"></script>
 
-    // Constructor
-    public BankAccount(String accountHolderName, double initialDeposit) {
-        if (initialDeposit < 0) {
-            System.out.println("❌ Initial deposit cannot be negative. Setting balance to 0.");
-            initialDeposit = 0;
-        }
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-        this.accountHolderName = accountHolderName;
-        this.balance = initialDeposit;
-        this.accountNumber = generateAccountNumber();
-        totalAccounts++;
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #0f1720;
+      --muted: #9aa7b2;
+      --accent: #58a6ff;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.04);
+      --sidebar-w: 260px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
 
-    // Deposit method
-    public void deposit(double amount) {
-        if (amount <= 0) {
-            System.out.println("❌ Deposit amount must be positive.");
-        } else {
-            balance += amount;
-            System.out.println("✅ Deposited " + amount + " to " + accountNumber);
-        }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: inherit;
     }
 
-    // Withdraw method
-    public void withdraw(double amount) {
-        if (amount <= 0) {
-            System.out.println("❌ Withdrawal amount must be positive.");
-        } else if (amount > balance) {
-            System.out.println("❌ Insufficient balance in " + accountNumber);
-        } else {
-            balance -= amount;
-            System.out.println("✅ Withdrawn " + amount + " from " + accountNumber);
-        }
+    header.appbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), transparent);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(6px);
     }
 
-    // Check balance
-    public void checkBalance() {
-        System.out.println("💰 Balance for " + accountNumber + ": " + balance);
+    header .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    // Display account info
-    public void displayAccountInfo() {
-        System.out.println("------------------------------");
-        System.out.println("Account Number : " + accountNumber);
-        System.out.println("Account Holder : " + accountHolderName);
-        System.out.println("Balance        : " + balance);
-        System.out.println("------------------------------");
+    header .brand h1 {
+      font-size: 1.05rem;
+      margin: 0;
+      color: #ffffff;
     }
 
-    // Generate unique account number
-    public static String generateAccountNumber() {
-        accountCounter++;
-        return String.format("ACC%03d", accountCounter);
+    header .controls {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
 
-    public static int getTotalAccounts() {
-        return totalAccounts;
+    #hamburger {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--muted);
+      display: none;
     }
 
-    public String getAccountNumber() {
-        return accountNumber;
-    }
-}
-
-public class BankManagementSystem {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-
-        BankAccount[] accounts = new BankAccount[10]; // max 10 accounts
-        int accountCount = 0;
-
-        while (true) {
-            System.out.println("\n===== BANK MENU =====");
-            System.out.println("1. Create Account");
-            System.out.println("2. Deposit");
-            System.out.println("3. Withdraw");
-            System.out.println("4. Check Balance");
-            System.out.println("5. Display Account Info");
-            System.out.println("6. Show Total Accounts");
-            System.out.println("7. Exit");
-            System.out.print("👉 Enter choice: ");
-            int choice = sc.nextInt();
-            sc.nextLine(); // consume newline
-
-            switch (choice) {
-                case 1:
-                    if (accountCount < accounts.length) {
-                        System.out.print("Enter Account Holder Name: ");
-                        String name = sc.nextLine();
-                        System.out.print("Enter Initial Deposit: ");
-                        double deposit = sc.nextDouble();
-                        accounts[accountCount] = new BankAccount(name, deposit);
-                        System.out.println("✅ Account created successfully!");
-                        accountCount++;
-                    } else {
-                        System.out.println("❌ Account limit reached.");
-                    }
-                    break;
-
-                case 2:
-                    System.out.print("Enter Account Number: ");
-                    String accNoDep = sc.nextLine();
-                    BankAccount accDep = findAccount(accounts, accNoDep, accountCount);
-                    if (accDep != null) {
-                        System.out.print("Enter Amount to Deposit: ");
-                        double amount = sc.nextDouble();
-                        accDep.deposit(amount);
-                    } else {
-                        System.out.println("❌ Account not found.");
-                    }
-                    break;
-
-                case 3:
-                    System.out.print("Enter Account Number: ");
-                    String accNoWit = sc.nextLine();
-                    BankAccount accWit = findAccount(accounts, accNoWit, accountCount);
-                    if (accWit != null) {
-                        System.out.print("Enter Amount to Withdraw: ");
-                        double amount = sc.nextDouble();
-                        accWit.withdraw(amount);
-                    } else {
-                        System.out.println("❌ Account not found.");
-                    }
-                    break;
-
-                case 4:
-                    System.out.print("Enter Account Number: ");
-                    String accNoBal = sc.nextLine();
-                    BankAccount accBal = findAccount(accounts, accNoBal, accountCount);
-                    if (accBal != null) {
-                        accBal.checkBalance();
-                    } else {
-                        System.out.println("❌ Account not found.");
-                    }
-                    break;
-
-                case 5:
-                    System.out.print("Enter Account Number: ");
-                    String accNoInfo = sc.nextLine();
-                    BankAccount accInfo = findAccount(accounts, accNoInfo, accountCount);
-                    if (accInfo != null) {
-                        accInfo.displayAccountInfo();
-                    } else {
-                        System.out.println("❌ Account not found.");
-                    }
-                    break;
-
-                case 6:
-                    System.out.println("✅ Total accounts created: " + BankAccount.getTotalAccounts());
-                    break;
-
-                case 7:
-                    System.out.println("👋 Thank you for using the Bank System. Goodbye!");
-                    sc.close();
-                    return;
-
-                default:
-                    System.out.println("❌ Invalid choice. Try again.");
-            }
-        }
+    .layout {
+      display: flex;
+      height: calc(100vh - 64px);
     }
 
-    
-    public static BankAccount findAccount(BankAccount[] accounts, String accNo, int count) {
-        for (int i = 0; i < count; i++) {
-            if (accounts[i] != null && accounts[i].getAccountNumber().equals(accNo)) {
-                return accounts[i];
-            }
-        }
-        return null;
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--panel);
+      border-right: 1px solid var(--glass-border);
+      padding: 16px;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
     }
-}
+
+    .sidebar.hide {
+      transform: translateX(-110%);
+      position: fixed;
+      z-index: 100;
+      top: 64px;
+      left: 0;
+      bottom: 0;
+    }
+
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .folder,
+    .file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .13s;
+    }
+
+    .folder:hover,
+    .file:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+    }
+
+    .folder .name,
+    .file .name {
+      color: #ffffff;
+    }
+
+    #codeContainer {
+      color: #ffffff;
+      white-space: pre-wrap;
+    }
+
+    .viewer {
+      flex: 1;
+      padding: 18px;
+      overflow: auto;
+    }
+
+    pre[class*="language-"] {
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      box-shadow: 0 8px 30px rgba(3, 7, 18, 0.6);
+    }
+
+    button {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      color: var(--accent);
+    }
+
+    footer {
+      padding: 12px 18px;
+      text-align: center;
+      color: var(--muted);
+      border-top: 1px solid var(--glass-border);
+    }
+
+    #breadcrumbs {
+      margin-bottom: 12px;
+      font-size: 1rem;
+      color: #ffffff;
+    }
+
+    @media (max-width: 800px) {
+      #hamburger {
+        display: block;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        z-index: 100;
+        background: var(--panel);
+      }
+
+      .layout {
+        padding-left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+  <header class="appbar">
+    <div id="hamburger"><i class="fa-solid fa-bars"></i></div>
+    <div class="brand">
+      <h1>STEP Codes Viewer</h1>
+    </div>
+
+    <div class="controls">
+      <button id="refreshBtn" title="Refresh file list"><i class="fa-solid fa-arrows-rotate"></i></button>
+      <button id="openRepo" title="Open repo on GitHub"><i class="fa-brands fa-github"></i></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div id="fileList" class="file-list">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    </aside>
+
+    <main class="viewer">
+      <button id="backBtn"><i class="fa-solid fa-arrow-left"></i> Go Back</button>
+      <div id="breadcrumbs">/</div>
+      <div id="codeContainer">
+        <p style="color: var(--muted);">Select a file to view</p>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    Developed by <b>Sreeshan Reddy</b> • RA2411003010442
+  </footer>
+
+  <script>
+    const username = "Sreeshan-dev";
+    const repo = "STEP-3RD-SEM";
+    const apiBase = `https://api.github.com/repos/${username}/${repo}/contents`;
+
+    const fileListEl = document.getElementById('fileList');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const codeContainer = document.getElementById('codeContainer');
+    const backBtn = document.getElementById('backBtn');
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+
+    let currentPath = '';
+
+    hamburger.addEventListener('click', () => sidebar.classList.toggle('hide'));
+
+    async function fetchFiles(path = '') {
+      try {
+        const res = await fetch(`${apiBase}/${path}`);
+        return await res.json();
+      } catch (e) {
+        return { message: e.message };
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[ch]));
+    }
+
+    function renderList(files) {
+      fileListEl.innerHTML = '';
+      if (!files || files.length === 0) {
+        fileListEl.innerHTML = '<p style="color: var(--muted)">No files found</p>';
+        return;
+      }
+      files.forEach(f => {
+        const el = document.createElement('div');
+        el.className = f.type === 'dir' ? 'folder' : 'file';
+        el.innerHTML = `<div class="name">${f.name}</div>`;
+        el.onclick = () => f.type === 'dir' ? loadFileList(f.path) : loadFileContent(f.path);
+        fileListEl.appendChild(el);
+      });
+    }
+
+    async function loadFileList(path = '') {
+      currentPath = path;
+      breadcrumbs.textContent = path ? `/${path}` : '/';
+      fileListEl.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+
+      const files = await fetchFiles(path);
+      if (files.message) {
+        fileListEl.innerHTML = `<p style="color:tomato">Error: ${files.message}</p>`;
+        codeContainer.innerHTML = '<p style="color:var(--muted)">Select a file to view</p>';
+        return;
+      }
+
+      const filtered = path === ''
+        ? files.filter(x => x.type === 'dir' && /^WEEK\d+$/i.test(x.name))
+        : files;
+
+      filtered.sort((a, b) => (a.type === b.type) ? a.name.localeCompare(b.name) : (a.type === 'dir' ? -1 : 1));
+
+      renderList(filtered);
+    }
+
+    async function loadFileContent(path) {
+      const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${path}`;
+      const res = await fetch(rawUrl);
+      const text = await res.text();
+      const pre = document.createElement('pre');
+      pre.className = 'language-clike';
+      pre.innerHTML = escapeHtml(text);
+      codeContainer.innerHTML = '';
+      codeContainer.appendChild(pre);
+      Prism.highlightElement(pre);
+    }
+
+    document.getElementById('refreshBtn').onclick = () => loadFileList(currentPath);
+    document.getElementById('openRepo').onclick = () => window.open(`https://github.com/${username}/${repo}`, '_blank');
+
+    backBtn.addEventListener('click', () => {
+      if (!currentPath) return;
+      const parts = currentPath.split('/');
+      parts.pop();
+      loadFileList(parts.join('/'));
+    });
+
+    loadFileList();
+  </script>
+</body>
+
+</html>
