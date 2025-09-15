@@ -7,7 +7,7 @@ public class AudioMixer {
     int count;
 
     public AudioMixer() {
-        this("StandardMix-8", 8, false, 120.0);
+        this("StandardMix-8", 8, false, 123.0);
     }
 
     public AudioMixer(String model, int channels) {
