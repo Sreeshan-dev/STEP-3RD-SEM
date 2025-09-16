@@ -1,4 +1,4 @@
-package STEP.WEEK3.LAB; 
+package WEEK3.LAB; 
 class Vehicle {
     private String id, brand;
     private double rent;
